@@ -1,16 +1,16 @@
 ---
-title: "immobilier"
+title: "Mise en forme des données et premières visualisations"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+# libraries
 library(ggplot2)
 library(dplyr)
-```
 
-```{r}
+# lecture des données
 df_2016 <- read.csv("./data/2016.csv")
 df_2017 <- read.csv("./data/2017.csv")
 df_2018 <- read.csv("./data/2018.csv")
@@ -18,25 +18,41 @@ df_2019 <- read.csv("./data/2019.csv")
 df_2020 <- read.csv("./data/2020.csv")
 df_2021 <- read.csv("./data/2021.csv")
 df <- rbind(df_2016, df_2017, df_2018, df_2019, df_2020,df_2021)
-```
 
-
-```{r}
+# on ne garde que les codes postaux de Paris
+print(nrow(df))
 df <- df[df$code_postal %in% c( paste0("7500",1:9),paste0("750",10:20)) ,]
-```
+print(nrow(df))
 
-
-```{r}
-useful_columns <- c("date_mutation", "valeur_fonciere", "nature_mutation", "code_postal", "nombre_pieces_principales", "surface_reelle_bati", "lot1_surface_carrez", "type_local", "longitude", "latitude")
+useful_columns <- c("date_mutation", 
+                    "valeur_fonciere", 
+                    "nature_mutation", 
+                    "code_postal", 
+                    "nombre_pieces_principales", 
+                    "surface_reelle_bati", 
+                    "lot1_surface_carrez", 
+                    "type_local", 
+                    "nom_commune",
+                    "lot2_surface_carrez")
 
 df <- df[, useful_columns]
 
-# Remove big buildings and keep only housing
-df <- df[df$valeur_fonciere < 20000000,]
-df <- df[df$surface_reelle_bati < 300,]
-df <- df[df$type_local == "Appartement",]
+# on ne garde que les ventes, et les biens de type habitation
+df <- df[df$type_local %in% c("Appartement", "Maison"),]
 df <- df[df$nature_mutation == "Vente",]
 
+df <- df[!is.na(df$valeur_fonciere),]
+```
+
+```{r}
+ggplot(df[!is.na(df$lot1_surface_carrez) & df$surface_reelle_bati < 150 & df$lot1_surface_carrez < 150 & is.na(df$lot2_surface_carrez),], aes(x = lot1_surface_carrez, y = surface_reelle_bati)) +
+  geom_point(alpha = 0.8) +
+  theme_minimal() +
+  geom_smooth(method = "lm")
+```
+
+
+```{r}
 df$m2 <- case_when(00 <= df$surface_reelle_bati & df$surface_reelle_bati < 20 ~ "0-20",
                   20 <= df$surface_reelle_bati & df$surface_reelle_bati < 25 ~ "20-25",
                   25 <= df$surface_reelle_bati & df$surface_reelle_bati < 30 ~ "25-30",
@@ -55,67 +71,77 @@ df$m2 <- case_when(00 <= df$surface_reelle_bati & df$surface_reelle_bati < 20 ~ 
 df$prix.m2 <- df$valeur_fonciere / df$surface_reelle_bati
 
 df$annee <- substr(df$date_mutation, 1, 4)
-
-df[!is.na(df$m2) & df$prix.m2 > 80000,]
+df$annee <- as.factor(df$annee)
 ```
 
 
 ```{r}
-df[!is.na(df$m2) & df$m2 != "0-10" & df$prix.m2 < 20000,] %>%
+df[!is.na(df$m2) & df$m2 != "0-10" & df$prix.m2 < 40000,] %>%
   group_by(m2, annee) %>%
   summarise_at(vars(prix.m2), list(name = mean)) %>%
     ggplot(aes(x = m2, y = name, group = annee, color = annee)) +
       geom_line() +
       theme_classic()
 
-df[!is.na(df$m2) & df$m2 != "0-10" & df$prix.m2 < 20000 & df$surface_reelle_bati < 40,] %>%
-  group_by(m2, annee, code_postal) %>%
-  summarise_at(vars(prix.m2), list(name = mean)) %>%
-    ggplot(aes(x = m2, y = name, group = annee, color = annee)) +
-      geom_line() +
-      facet_wrap(~code_postal) +
-      theme_classic() + 
-  geom_hline(yintercept = 10000, linetype = "dashed", alpha = 0.5) +
-  theme(legend.position = "bottom") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-```
 
+
+# df[!is.na(df$m2) & df$m2 != "0-10" & df$prix.m2 < 20000 & df$surface_reelle_bati < 40,] %>%
+#   group_by(m2, annee, code_postal) %>%
+#   summarise_at(vars(prix.m2), list(name = mean)) %>%
+#     ggplot(aes(x = m2, y = name, group = annee, color = annee)) +
+#       geom_line() +
+#       facet_wrap(~code_postal) +
+#       theme_classic() + 
+#   geom_hline(yintercept = 10000, linetype = "dashed", alpha = 0.5) +
+#   theme(legend.position = "bottom") +
+#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+```{r}
+ggplot(df[!is.na(df$surface_reelle_bati) & df$surface_reelle_bati < 150 & df$m2 != "0-10" & df$prix.m2 < 35000 & df$prix.m2 >3000,], aes(x = surface_reelle_bati, y = prix.m2, color = annee, group = annee)) +
+  #geom_point(alpha = 0.1) +
+  geom_smooth(aes(fill = annee)) +
+  theme_minimal()
+```
 
 ```{r}
-df[!is.na(df$m2) & df$m2 != "0-10" & df$prix.m2 < 20000 & df$surface_reelle_bati < 40 & df$code_postal %in% c("75003", "75002", "75010", "75018", "75011", "75009"),] %>%
-  group_by(m2, annee, code_postal) %>%
-  summarise_at(vars(prix.m2), list(name = mean)) %>%
-    ggplot(aes(x = m2, y = name, group = annee, color = annee)) +
-      geom_line() +
-      facet_wrap(~code_postal) +
-      theme_classic() + 
-  geom_hline(yintercept = 10000, linetype = "dashed", alpha = 0.5) +
-  theme(legend.position = "bottom") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ggplot(df[!is.na(df$surface_reelle_bati) & df$surface_reelle_bati < 150 & df$m2 != "0-10" & df$prix.m2 < 35000 & df$prix.m2 >3000 & df$code_postal == 75007,], aes(x = surface_reelle_bati, y = prix.m2, color = annee, group = annee)) +
+  geom_smooth(aes(fill = annee)) +
+  theme_minimal() 
 ```
-
 
 ```{r}
 #df$code_postal <- as.factor(df$code_postal)
-df[!is.na(df$m2) & df$m2 != "0-10" & df$prix.m2 < 20000,] %>%
+df[!is.na(df$m2) & df$m2 != "0-10" & df$prix.m2 < 40000,] %>%
   group_by(annee) %>%
   summarise_at(vars(prix.m2), list(name = mean)) %>%
     ggplot(aes(x = annee, y = name)) +
       geom_point() +
-      theme_classic() +
+      theme_minimal() +
   ylim(5000, 12000) +
   ylab("Prix moyen au m2")
 ```
 
 ```{r}
-df[!is.na(df$m2) & df$m2 != "0-10" & df$prix.m2 < 20000,] %>%
+df[!is.na(df$m2) & df$m2 != "0-10" & df$prix.m2 < 35000,] %>%
   group_by(annee) %>%
   summarise(n = n()) %>%
   ggplot(aes(x = annee, y = n)) +
-      geom_point() +
+      #geom_point() +
+      geom_bar(stat="identity", fill = "pink", color = "darkblue", alpa = 0.5) +
       theme_classic() +
   ylim(0,40000) +
-  ylab("Nombre de transactions immobilières de type habitation")
+  ylab("Nombre de transactions immobilières")
+```
+
+```{r}
+restricted.set <- df[df$prix.m2 < 35000,]
+test <- as.data.frame(aggregate(restricted.set$valeur_fonciere, by=list(Category=restricted.set$annee), FUN=sum))
+ggplot(test, aes(x = Category, y = x)) +
+      #geom_point() +
+      geom_bar(stat="identity", fill = "pink", color = "darkblue", alpa = 0.5) +
+      theme_classic() +
+  ylab("Total en euros des transactions annuelles") +
+  xlab("Année")
 ```
 
 ```{r}
@@ -129,89 +155,12 @@ df[!is.na(df$m2) & df$prix.m2 < 20000 & df$prix.m2 > 5000 & df$m2 != "80+",] %>%
   ylab("Nombre de transactions immobilières de type habitation")
 ```
 
-Focus sur le quartier de Barbes.
-
-en bas a gauche
-48.875376, 2.341068
-en bas à droite 
-48°52'10.1"N 2°21'45.5"E
-en haut à droite
-48.883157, 2.372657
-en haut à gauche
-48.886431, 2.347509
-
 ```{r}
-df[!is.na(df$m2) & df$m2 != "0-10" & df$prix.m2 < 20000 & df$prix.m2 > 5000 & (48.87 < df$latitude & df$latitude < 48.88) & (2.33 < df$longitude &  df$longitude < 2.37),] %>%
-  group_by(m2, annee) %>%
-  summarise_at(vars(prix.m2), list(name = mean)) %>%
-    ggplot(aes(x = m2, y = name, group = annee, color = annee)) +
-      geom_line() +
-      theme_bw()
-```
-
-
-```{r}
-df[!is.na(df$m2) & df$m2 != "0-10" & df$prix.m2 < 20000 & df$prix.m2 > 5000 & df$code_postal %in% c("75010") & df$annee > 2016,] %>%
-  group_by(m2) %>%
-  summarise_at(vars(prix.m2), list(name = mean))
-```
-
-```{r}
-df[!is.na(df$m2) & df$m2 %in% c("25-30", "30-35", "35-40") & df$prix.m2 < 20000 & df$prix.m2 > 3000 & df$code_postal %in% c("75010") & df$annee > 2016,] %>%
-  ggplot(aes(x = prix.m2)) +
-  geom_histogram(alpha = 0.4, color = "black", fill = "pink") +
-  facet_grid(~m2) +
-  theme_bw() +
-  geom_vline(xintercept = 10781, color = "darkblue", linetype = "dashed", size = 1) +
-  geom_vline(xintercept = 9687, color = "red", linetype = "dashed", size = 1) +
-  ggtitle("10eme arrondissement")
-
-
-df[!is.na(df$m2) & df$m2 %in% c("25-30", "30-35", "35-40") & df$prix.m2 < 20000 & df$prix.m2 > 3000 & df$code_postal %in% c("75010") & df$annee > 2016,] %>%
-  ggplot(aes(x = prix.m2)) +
-  geom_histogram(alpha = 0.4, color = "black", fill = "pink") +
-  #facet_grid(~m2) +
-  theme_bw() +
-  geom_vline(xintercept = 10781, color = "darkblue", linetype = "dashed", size = 1) +
-  geom_vline(xintercept = 9000, color = "red", linetype = "dashed", size = 1) +
-  ggtitle("10eme arrondissement")
-```
-
-```{r}
-df[!is.na(df$m2) & df$m2 %in% c("25-30", "30-35", "35-40") & df$prix.m2 < 20000 & df$prix.m2 > 3000 & df$code_postal %in% c("75018") & df$annee > 2016,] %>%
-  ggplot(aes(x = prix.m2)) +
-  geom_histogram(alpha = 0.4, color = "black", fill = "pink") +
-  #facet_grid(~m2) +
-  theme_bw() +
-  geom_vline(xintercept = 10781, color = "darkblue", linetype = "dashed", size = 1) +
-  geom_vline(xintercept = 9000, color = "red", linetype = "dashed", size = 1) +
-  ggtitle("18eme arrondissement")
-```
-
-```{r}
-df[!is.na(df$m2) & df$m2 %in% c("25-30", "30-35", "35-40") & df$prix.m2 < 20000 & df$prix.m2 > 3000 & df$code_postal %in% c("75018", "75010") & df$annee > 2018,] %>%
-  ggplot(aes(x = prix.m2)) +
-  geom_histogram(alpha = 0.4, color = "black", fill = "pink") +
-  #facet_grid(~m2) +
-  theme_bw() +
-  geom_vline(xintercept = 10781, color = "darkblue", linetype = "dashed", size = 1) +
-  geom_vline(xintercept = 10000, color = "red", linetype = "dashed", size = 1) +
-  ggtitle("10eme et 18eme arrondissements")
-```
-```{r}
-median(df[!is.na(df$m2) & df$m2 %in% c("25-30", "30-35", "35-40") & df$prix.m2 < 20000 & df$prix.m2 > 3000 & df$code_postal %in% c("75018", "75010") & df$annee > 2016, "prix.m2"])
-```
-
-
-
-```{r}
-df[!is.na(df$m2) & df$m2 != "0-10" & df$prix.m2 < 50000 & df$code_postal %in% c("75010"),] %>%
-  group_by(m2, annee) %>%
-  summarise_at(vars(prix.m2), list(name = mean)) %>%
-    ggplot(aes(x = m2, y = name, group = annee, color = annee)) +
-      geom_line() +
-      theme_bw() + geom_hline(yintercept = 10781.25, color = "darkblue", linetype = "dashed") +
-  geom_hline(yintercept =  10000,color = "red", linetype = "dashed" )
+# focus sur un quartier possible
+ggplot(df[df$code_postal == 75018 & df$annee %in% c(2020, 2019, 2018) & df$lot1_surface_carrez > 30 & df$lot1_surface_carrez < 35 & df$valeur_fonciere < 600000,], aes(x = valeur_fonciere)) +
+  geom_histogram(fill = "magenta", color = "purple", alpha = 0.3) +
+  theme_minimal() +
+  ylab("")
 ```
 
 
