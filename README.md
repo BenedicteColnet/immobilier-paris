@@ -2,6 +2,9 @@
 
 **Analyse *rapide* du marché immobilier parisien à partir de la base de données DVF.**
 
+
+![alt text](https://github.com/BenedicteColnet/immobilier-paris/blob/main/prix_annee.jpg)
+
 ## Késako
 
 Le code ici présent utilise les données de DVF (Demandes de Valeur Foncière) -- qui recense les mutations à titre onéreux advenues les 5 dernières années -- pour visualiser l'évolution des prix de l'immobilier. 
