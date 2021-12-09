@@ -100,8 +100,25 @@ df[!is.na(df$m2) & df$m2 != "0-10" & df$prix.m2 < 40000,] %>%
 ggplot(df[!is.na(df$surface_reelle_bati) & df$surface_reelle_bati < 150 & df$m2 != "0-10" & df$prix.m2 < 35000 & df$prix.m2 >3000,], aes(x = surface_reelle_bati, y = prix.m2, color = annee, group = annee)) +
   #geom_point(alpha = 0.1) +
   geom_smooth(aes(fill = annee)) +
-  theme_minimal()
+  theme_minimal() +
+  ylab("Prix au mètre carré") +
+  xlab("Surface totale du bâtiment") +
+  theme(legend.position="bottom")
 ```
+Outliers ?
+
+```{r}
+
+df$outliers <- ifelse(df$prix.m2 < 1000, "prix très bas", "RAS")
+
+ggplot(df[!is.na(df$surface_reelle_bati) & df$surface_reelle_bati < 150 & df$m2 != "0-10" & df$annee == 2020 & df$prix.m2 < 30000,], aes(x = surface_reelle_bati, y = prix.m2, color = outliers)) +
+  geom_point(alpha = 0.3) +
+  theme_minimal() +
+  ylab("Prix au mètre carré") +
+  xlab("Surface totale du bâtiment") +
+  theme(legend.position="bottom")
+```
+
 
 ```{r}
 ggplot(df[!is.na(df$surface_reelle_bati) & df$surface_reelle_bati < 150 & df$m2 != "0-10" & df$prix.m2 < 35000 & df$prix.m2 >3000 & df$code_postal == 75007,], aes(x = surface_reelle_bati, y = prix.m2, color = annee, group = annee)) +
