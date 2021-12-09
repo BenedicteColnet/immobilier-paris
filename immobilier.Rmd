@@ -102,8 +102,9 @@ ggplot(df[!is.na(df$surface_reelle_bati) & df$surface_reelle_bati < 150 & df$m2 
   geom_smooth(aes(fill = annee)) +
   theme_minimal() +
   ylab("Prix au mètre carré") +
-  xlab("Surface totale du bâtiment") +
-  theme(legend.position="bottom")
+  xlab("Surface totale du bien") +
+  theme(legend.position="bottom") 
+ggsave("./prix_annee.jpg")
 ```
 Outliers ?
 
@@ -147,7 +148,9 @@ df[!is.na(df$m2) & df$m2 != "0-10" & df$prix.m2 < 35000,] %>%
       geom_bar(stat="identity", fill = "pink", color = "darkblue", alpa = 0.5) +
       theme_classic() +
   ylim(0,40000) +
-  ylab("Nombre de transactions immobilières")
+  ylab("Nombre de transactions immobilières") +
+  xlab("Année (attention 2021 incomplet)") 
+ggsave("./nombre_transac.jpg")
 ```
 
 ```{r}
