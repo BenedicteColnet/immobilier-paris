@@ -13,11 +13,9 @@ L'analyse proposée se concentre sur la ville de Paris, mais le principe est le 
 
 En effet si l'[application]([https://app.dvf.etalab.gouv.fr](https://app.dvf.etalab.gouv.fr/) ) de visualisation proposée par etalab prend appui sur ces données et propose de visualiser les transactions à la maille de la parcelle cadastrale, cette dernière ne permet pas d'obtenir une vision aggrégée de l'évolution des prix, du nombre de vente, etc.
 
-Les données rassemblée ici sont celles de Paris intramuros, depuis 2016 jusqu'au premier semestre 2021 inclus. Le code est rédigé en `R` avec une première partie de nettoyage des données, puis de visualisation.
+Les données rassemblée ici sont celles de Paris intramuros, depuis 2016 jusqu'au premier semestre 2022 inclus. Le code est rédigé en `R` avec une première partie de nettoyage des données, puis de visualisation.
 
 Ces données forment une ressource intéressante pour quiconque s'intéresse au marché immobilier, mais aussi pour permettre des applications en cours de statistique / machine learning / économie. N'hésitez pas à compléter les analyses ou reprendre cela pour votre propre compte.
-
-Pour information les fichiers présents dans le dossier `data` sont en date de novembre 2021.
 
 ## Disclaimers
 
