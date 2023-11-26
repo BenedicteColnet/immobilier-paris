@@ -45,11 +45,12 @@ df_2019 <- read.csv("./data/2019.csv")
 df_2020 <- read.csv("./data/2020.csv")
 df_2021 <- read.csv("./data/2021.csv")
 df_2022 <- read.csv("./data/2022.csv")
+df_2023 <- read.csv("./data/2023.csv")
 
 # handle something strange in 2021
-df_2021 <- df_2021[, 2:41]
+#df_2021 <- df_2021[, 2:41]
 
-df <- rbind(df_2016, df_2017, df_2018, df_2019, df_2020, df_2021, df_2022)
+df <- rbind(df_2016, df_2017, df_2018, df_2019, df_2020, df_2021, df_2022, df_2023)
 
 # on ne garde que les codes postaux de Paris
 print(df)
